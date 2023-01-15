@@ -3,6 +3,7 @@ import { useWeb3Contract } from "react-moralis"
 import { useMoralis } from "react-moralis"
 import { ethers } from "ethers"
 import { contractAddresses, contractAbi } from "../constants"
+import { useNotification } from "web3uikit"
 
 export default function RaffleEntrance() {
     // "useMoralis" knows what is the network based on connected wallet from "Header" component
@@ -19,12 +20,18 @@ export default function RaffleEntrance() {
     // Below won't work as it do not change state after page rerender
     //let entranceFee = ""
 
+    const [numPlayers, setNumPlayers] = useState("0")
+    const [recentWinner, setRecentWinner] = useState("0")
+
+    // Pop-up notification
+    const dispatch = useNotification()
+
     const { runContractFunction: enterRaffle } = useWeb3Contract({
         abi: contractAbi,
         contractAddress: raffleAddress,
         functionName: "enterRaffle",
         params: {}, // This function does not take any arguments
-        msgValue: 0, //
+        msgValue: entranceFee,
     })
 
     const { runContractFunction: getEntranceFee } = useWeb3Contract({
@@ -34,17 +41,90 @@ export default function RaffleEntrance() {
         params: {}, // This function does not take any arguments
     })
 
+    const { runContractFunction: getNumberOfPlayers } = useWeb3Contract({
+        abi: contractAbi,
+        contractAddress: raffleAddress,
+        functionName: "getNumberOfPlayers",
+        params: {}, // This function does not take any arguments
+    })
+
+    const { runContractFunction: getRecentWinner } = useWeb3Contract({
+        abi: contractAbi,
+        contractAddress: raffleAddress,
+        functionName: "getRecentWinner",
+        params: {}, // This function does not take any arguments
+    })
+
+    // Try to read raffle function
+    async function updateUI() {
+        // We had to wrap it into async function to use await
+        const entranceFeeFromCall = (await getEntranceFee()).toString()
+        const numPlayersFromCall = (await getNumberOfPlayers()).toString()
+        const recentWinnerFromCall = (await getRecentWinner()).toString()
+        setEntranceFee(entranceFeeFromCall)
+        setNumPlayers(numPlayersFromCall)
+        setRecentWinner(recentWinnerFromCall)
+    }
+
     useEffect(() => {
         if (isWeb3Enabled) {
-            // Try to read raffle function
-            async function updateUI() {
-                // We had to wrap it into async function to use await
-                const entranceFeeFromCall = (await getEntranceFee()).toString()
-                setEntranceFee(ethers.utils.formatUnits(entranceFeeFromCall, "ether"))
-            }
             updateUI()
         }
     }, [isWeb3Enabled])
 
-    return <div>Entrance Fee: {entranceFee} ETH</div>
+    const handleSuccess = async function (tx) {
+        await tx.wait(1)
+        handleNewNotification(tx)
+        updateUI()
+    }
+
+    const handleNewNotification = function () {
+        dispatch({
+            type: "info",
+            message: "Transaction Complete!",
+            title: "Notification",
+            position: "topR",
+            icon: "bell",
+        })
+    }
+
+    // Make Tx Listener To Update Raffle Once winner is picked
+    const transactionListener = async function () {
+        await new Promise(async (resolve, reject) => {
+            raffle.once("WinnerPicked", async () => {
+                try {
+                    updateUI()
+                    resolve()
+                } catch (error) {
+                    console.log(error)
+                    reject(error)
+                }
+            })
+        })
+    }
+
+    return (
+        <div>
+            {raffleAddress ? (
+                <div>
+                    <button
+                        onClick={async function () {
+                            await enterRaffle({
+                                // It checks if transaction was successfully sent to MetaMask
+                                onSuccess: handleSuccess,
+                                onError: (error) => console.log(error),
+                            })
+                        }}
+                    >
+                        Enter Raffle
+                    </button>
+                    Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH
+                </div>
+            ) : (
+                <div>No Raffle Address Detected</div>
+            )}
+            <div>Number Of Players: {numPlayers}</div>
+            <div>Last Winner: {recentWinner}</div>
+        </div>
+    )
 }
