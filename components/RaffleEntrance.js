@@ -18,7 +18,7 @@ export default function RaffleEntrance() {
     // We are setting below variable of "entranceFee" to "0" and function "setEntranceFee" updating our state/frontend
     const [entranceFee, setEntranceFee] = useState("0")
     // Below won't work as it do not change state after page rerender
-    //let entranceFee = ""
+    // let entranceFee = ""
 
     const [numPlayers, setNumPlayers] = useState("0")
     const [recentWinner, setRecentWinner] = useState("0")
@@ -69,6 +69,7 @@ export default function RaffleEntrance() {
     useEffect(() => {
         if (isWeb3Enabled) {
             updateUI()
+            transactionListener()
         }
     }, [isWeb3Enabled])
 
@@ -89,11 +90,16 @@ export default function RaffleEntrance() {
     }
 
     // Make Tx Listener To Update Raffle Once winner is picked
+    // Come back here after Lesson 15
+
     const transactionListener = async function () {
-        await new Promise(async (resolve, reject) => {
-            raffle.once("WinnerPicked", async () => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const contract = new ethers.Contract(raffleAddress, contractAbi, provider)
+
+        await new Promise((resolve, reject) => {
+            contract.on("WinnerPicked", async () => {
                 try {
-                    updateUI()
+                    await updateUI()
                     resolve()
                 } catch (error) {
                     console.log(error)
