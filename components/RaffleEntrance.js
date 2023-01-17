@@ -90,14 +90,14 @@ export default function RaffleEntrance() {
     }
 
     // Make Tx Listener To Update Raffle Once winner is picked
-    // Come back here after Lesson 15
+    // Come back here after Lesson 15 as it is currently delayed for 5 seconds
 
     const transactionListener = async function () {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
-        const contract = new ethers.Contract(raffleAddress, contractAbi, provider)
+        const raffle = new ethers.Contract(raffleAddress, contractAbi, provider)
 
         await new Promise((resolve, reject) => {
-            contract.on("WinnerPicked", async () => {
+            raffle.on("WinnerPicked", async () => {
                 try {
                     await updateUI()
                     resolve()
