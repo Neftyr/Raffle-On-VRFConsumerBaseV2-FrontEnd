@@ -5,11 +5,11 @@ import RaffleEntrance from "../components/RaffleEntrance"
 
 export default function Home() {
     return (
-        <div className={styles.container}>
+        <div>
             <Head>
                 <title>Raffle Smart Contract</title>
             </Head>
-            Decentralized Raffle
+
             <Header />
             <RaffleEntrance />
         </div>

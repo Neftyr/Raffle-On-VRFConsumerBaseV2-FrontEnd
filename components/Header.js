@@ -2,10 +2,11 @@ import { ConnectButton } from "web3uikit"
 
 export default function Header() {
     return (
-        // "moralisAuth=false" means we do not want to connect to any server
-        // this button below does everything what we coded in ManualHeader.js
-        <div>
-            <ConnectButton moralisAuth={false} />
-        </div>
+        <nav className="p-5 flex flex-row dark:bg-slate-800">
+            <h1 className="py-4 px-4 font-bold text-3xl"> Decentralized Lottery</h1>
+            <div className="absolute top-8 right-0">
+                <ConnectButton moralisAuth={false} />
+            </div>
+        </nav>
     )
 }

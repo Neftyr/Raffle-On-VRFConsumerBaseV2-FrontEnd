@@ -26,7 +26,11 @@ export default function RaffleEntrance() {
     // Pop-up notification
     const dispatch = useNotification()
 
-    const { runContractFunction: enterRaffle } = useWeb3Contract({
+    const {
+        runContractFunction: enterRaffle,
+        isLoading,
+        isFetching,
+    } = useWeb3Contract({
         abi: contractAbi,
         contractAddress: raffleAddress,
         functionName: "enterRaffle",
@@ -91,7 +95,6 @@ export default function RaffleEntrance() {
 
     // Make Tx Listener To Update Raffle Once winner is picked
     // Come back here after Lesson 15 as it is currently delayed for 5 seconds
-
     const transactionListener = async function () {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const raffle = new ethers.Contract(raffleAddress, contractAbi, provider)
@@ -110,10 +113,11 @@ export default function RaffleEntrance() {
     }
 
     return (
-        <div>
+        <div className="dark:bg-slate-800">
             {raffleAddress ? (
-                <div>
+                <div className="px-3 py-4">
                     <button
+                        className="bg-gray-700 hover:bg-black hover:text-white text-black font-bold py-2 px-4 rounded ml-auto"
                         onClick={async function () {
                             await enterRaffle({
                                 // It checks if transaction was successfully sent to MetaMask
@@ -121,10 +125,11 @@ export default function RaffleEntrance() {
                                 onError: (error) => console.log(error),
                             })
                         }}
+                        disabled={isLoading || isFetching}
                     >
-                        Enter Raffle
+                        {isLoading || isFetching ? <div className="animate-spin spinner-border h-8 w-8 border-b-2 rounded-full"></div> : "Enter Raffle"}
                     </button>
-                    Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH
+                    <styles className="px-3">Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH</styles>
                 </div>
             ) : (
                 <div>No Raffle Address Detected</div>
